@@ -21,15 +21,14 @@ tests:
               slo: "false"
               cluster_uuid: "uuid-1"
               cluster_name: "prod-cluster"
-              org_name: "RHTAP"
               current_version: "4.14.1"
               alertname: ClusterUpgradeOngoing
             exp_annotations:
-              summary: "Cluster upgrade ongoing: prod-cluster"
+              summary: "Cluster prod-cluster is currently undergoing an upgrade."
               description: "Cluster prod-cluster is currently undergoing an upgrade. Current version: 4.14.1"
               alert_team_handle: "<!subteam^S06V06A36F5>"
               team: konflux-spre
-              runbook_url: "https://gitlab.cee.redhat.com/konflux/docs/sop/"
+              runbook_url: "https://gitlab.cee.redhat.com/konflux/docs/sop/alert-ongoing-cluster-upgrades.md"
 
   - name: ClusterUpgradeOngoingNotFiring
     interval: 1m
