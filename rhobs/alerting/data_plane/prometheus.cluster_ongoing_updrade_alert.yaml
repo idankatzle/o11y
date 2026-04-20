@@ -26,4 +26,4 @@ spec:
               Current version: {{ $labels.current_version }}
             alert_team_handle: "<!subteam^S06V06A36F5>"
             team: konflux-spre
-            runbook_url: "https://gitlab.cee.redhat.com/konflux/docs/sop/alert-ongoing-cluster-upgrades.md"
+            runbook_url: "https://gitlab.cee.redhat.com/konflux/docs/sop/-/blob/main/infra/sre/alert-ongoing-cluster-upgrades.md"
