@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rhtap-kueue-predictive-alerts
+  labels:
+    tenant: rhtap
+spec:
+  groups:
+    - name: kueue-predictive.alerts
+      interval: 1m
+      rules:
+      - alert: KueuePredictiveQuotaStarvation
+        expr: |
+          (sum by (source_cluster) (kueue_admitted_active_workloads) - sum by (source_cluster) (kueue_cluster_queue_status{status="active"})) > 200
+        for: 15m
+        labels:
+          severity: high
+          component: kueue
+        annotations:
+          summary: Kueue Quota Leak / Starvation Risk
+          description: "Cluster {{ $labels.source_cluster }} has a high gap between admitted and active workloads."
+      - alert: KueueHighPriorityBuildDelay
+        expr: |
+          histogram_quantile(0.5, sum by (le, source_cluster, priority_class) (rate(kueue_admission_wait_time_seconds_bucket{priority_class=~".*build.*"}[5m]))) > 900
+        for: 5m
+        labels:
+          severity: high
+          component: kueue
+        annotations:
+          summary: Critical builds are waiting over 15 minutes
+          description: "Wait time for {{ $labels.priority_class }} on {{ $labels.source_cluster }} is above 15m threshold."
+      - alert: KueueMintmakerStarvation
+        expr: |
+          histogram_quantile(0.5, sum by (le, source_cluster, priority_class) (rate(kueue_admission_wait_time_seconds_bucket{priority_class=~".*update.*|.*dependency.*"}[15m]))) > 43200
+        for: 30m
+        labels:
+          severity: warning
+          component: kueue
+        annotations:
+          summary: Dependency updates are starving (>12h)
+          description: "Low priority tasks on {{ $labels.source_cluster }} have exceeded 12h wait time."

@@ -1,0 +1,58 @@
+evaluation_interval: 1m
+
+rule_files:
+  - prometheus.kueue_predictive_alerts.yaml
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'kueue_admitted_active_workloads{source_cluster="c1"}'
+        values: '500x60'
+      - series: 'kueue_cluster_queue_status{status="active", source_cluster="c1"}'
+        values: '100x60'
+
+    alert_rule_test:
+      - eval_time: 25m
+        alertname: KueuePredictiveQuotaStarvation
+        exp_alerts:
+          - exp_labels:
+              severity: high
+              component: kueue
+              source_cluster: c1
+            exp_annotations:
+              summary: "Kueue Quota Leak / Starvation Risk"
+              description: "Cluster c1 has a high gap between admitted and active workloads."
+
+  - interval: 1m
+    input_series:
+      - series: 'kueue_admission_wait_time_seconds_bucket{priority_class="konflux-post-merge-build", le="600", source_cluster="c1"}'
+        values: '0x60'
+      - series: 'kueue_admission_wait_time_seconds_bucket{priority_class="konflux-post-merge-build", le="1200", source_cluster="c1"}'
+        values: '0x60'
+      - series: 'kueue_admission_wait_time_seconds_bucket{priority_class="konflux-post-merge-build", le="+Inf", source_cluster="c1"}'
+        values: '100+100x59'
+
+    alert_rule_test:
+      - eval_time: 25m
+        alertname: KueueHighPriorityBuildDelay
+        exp_alerts:
+          - exp_labels:
+              severity: high
+              component: kueue
+              priority_class: konflux-post-merge-build
+              source_cluster: c1
+            exp_annotations:
+              summary: "Critical builds are waiting over 15 minutes"
+              description: "Wait time for konflux-post-merge-build on c1 is above 15m threshold."
+
+  - interval: 1m
+    input_series:
+      - series: 'kueue_admission_wait_time_seconds_bucket{priority_class="konflux-dependency-update", le="3600", source_cluster="c1"}'
+        values: '0x60'
+      - series: 'kueue_admission_wait_time_seconds_bucket{priority_class="konflux-dependency-update", le="+Inf", source_cluster="c1"}'
+        values: '100+100x59'
+
+    alert_rule_test:
+      - eval_time: 25m
+        alertname: KueueMintmakerStarvation
+        exp_alerts: []
